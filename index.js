@@ -97,10 +97,12 @@ fastify.get('/watchlist', async (request, reply) => {
 /**
  * Run the server!
  */
+// Lancement du serveur avec un port dynamique
 const start = async () => {
   try {
-    await fastify.listen({ port: 3000 });
-    console.log('Server listening on http://localhost:3000');
+    const port = process.env.PORT || 3000; // Utilise le port défini par Render, ou 3000 en local
+    await fastify.listen({ port });
+    console.log(`Serveur démarré sur http://localhost:${port}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
