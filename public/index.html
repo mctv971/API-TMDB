@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie Watchlist Interface</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+    h1 {
+      color: #444;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    input, button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .movie-card {
+      display: flex;
+      align-items: flex-start;
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .movie-card img {
+      width: 100px;
+      border-radius: 4px;
+      margin-right: 15px;
+    }
+    .movie-info {
+      flex: 1;
+    }
+    .movie-info h4 {
+      margin: 0 0 5px;
+    }
+    .movie-info p {
+      margin: 5px 0;
+      font-size: 14px;
+      color: #555;
+    }
+    .json-output {
+        margin-top: 10px;
+        padding: 10px;
+        background: #eee;
+        border-radius: 5px;
+        display: none;
+        max-height: 300px; 
+        overflow-y: auto;
+        word-wrap: break-word;
+        font-family: monospace;
+        font-size: 14px;
+        border: 1px solid #ccc;
+    }
+
+    .json-container {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      overflow-y: auto;
+      max-height: 400px; 
+      font-family: monospace;
+      font-size: 14px;
+      white-space: pre-wrap;
+      color: #343a40;
+    }
+    .json-key {
+        color: #0056b3;
+        font-weight: bold;
+    }
+    .json-value {
+        color: #28a745;
+    }
+    .json-bracket {
+        color: #6c757d;
+    }    
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Movie Watchlist Interface</h1>
+    
+    <h3>Search for a Movie</h3>
+    <input type="text" id="movieSearch" placeholder="Enter movie name">
+    <button onclick="searchMovie()">Search Movie</button>
+    
+
+    <h3>Add Movie to Watchlist</h3>
+    <input type="text" id="movieAdd" placeholder="Enter movie name">
+    <button onclick="addMovie()">Add to Watchlist</button>
+
+    <h3>Delete Movie to Watchlist</h3>
+    <input type="text" id="movieDelete" placeholder="Enter movie name">
+    <button onclick="deleteMovie()">delete to Watchlist</button>
+
+    <h3>View Watchlist</h3>
+    <button onclick="viewWatchlist()">View Watchlist</button>
+    <div id="output" class="json-output"></div>
+
+    <div id="movieResults"></div>
+
+    <div id="json-output" class="json-container" style="display: none;"></div>
+  </div>
+
+  <script>
+    const apiBaseUrl = 'http://localhost:3000'; // Replace with your Fastify server URL
+    const imageBaseUrl = 'https://image.tmdb.org/t/p/w200'; // TMDb base URL for movie posters
+
+    // Function to search for a movie
+    async function searchMovie() {
+      const movieName = document.getElementById('movieSearch').value;
+      if (!movieName) {
+        alert('Please enter a movie name.');
+        return;
+      }
+      try {
+        const response = await fetch(`${apiBaseUrl}/search?query=${encodeURIComponent(movieName)}`);
+        const data = await response.json();
+        console.log(data)
+
+        const movie = data;
+        if (movie) {
+          displayMovie(movie);
+        } else {
+          document.getElementById('movieResults').innerHTML = '<p>No movie found.</p>';
+        }
+      } catch (err) {
+        document.getElementById('movieResults').innerHTML = `<p>Error: ${err.message}</p>`;
+      }
+    }
+
+    // Function to display movie details
+// Fonction pour afficher un film
+    function displayMovie(movie) {
+    const movieResults = document.getElementById('movieResults');
+    
+    // Créer un nouvel élément movie-card et l'ajouter à movieResults
+    const movieCard = document.createElement('div');
+    movieCard.classList.add('movie-card');
+
+    movieCard.innerHTML = `  
+        <img src="${imageBaseUrl}${movie.poster_path}" alt="${movie.title}">
+        <div class="movie-info">
+        <h4>${movie.title}</h4>
+        <p>${movie.overview}</p>
+        <button onclick="renderFormattedJSON('${encodeURIComponent(JSON.stringify(movie))}')">Show JSON</button>
+        </div>
+    `;
+
+    // Ajouter le movieCard au conteneur existant sans supprimer ce qui est déjà dedans
+    movieResults.appendChild(movieCard);
+    }
+
+    // Function to render formatted JSON
+    function renderFormattedJSON(json) {
+      const jsonContainer = document.querySelector('.json-container');
+      jsonContainer.innerHTML = ''; // Clear previous content
+
+      const formattedHTML = formatJSON(JSON.parse(decodeURIComponent(json))); // Format JSON
+      jsonContainer.innerHTML = formattedHTML;
+      jsonContainer.style.display = 'block'; // Show the formatted JSON
+    }
+
+    // Function to format JSON into structured HTML
+    function formatJSON(obj) {
+      if (typeof obj !== 'object' || obj === null) {
+        return `<span class="json-value">${JSON.stringify(obj)}</span>`;
+      }
+
+      const isArray = Array.isArray(obj);
+      let html = `<span class="json-bracket">${isArray ? '[' : '{'}</span><br>`;
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          html += isArray
+            ? `<div style="padding-left: 20px;">${formatJSON(obj[key])},</div>`
+            : `<div style="padding-left: 20px;">
+                <span class="json-key">"${key}"</span>: ${formatJSON(obj[key])},
+              </div>`;
+        }
+      }
+      html += `<span class="json-bracket">${isArray ? ']' : '}'}</span>`;
+      return html;
+    }
+
+    // Function to add a movie to the watchlist
+    async function addMovie() {
+      const movieName = document.getElementById('movieAdd').value;
+      if (!movieName) {
+        alert('Please enter a movie name.');
+        return;
+      }
+      try {
+        const response = await fetch(`${apiBaseUrl}/watchlist/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: movieName })
+        });
+        const data = await response.json();
+        document.getElementById('output').style.display = 'block';
+        document.getElementById('output').innerHTML = `
+          <h4>Watchlist Update:</h4>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+      } catch (err) {
+        document.getElementById('output').innerHTML = `<p>Error: ${err.message}</p>`;
+      }
+    }
+
+    async function deleteMovie() {
+      const movieName = document.getElementById('movieDelete').value;
+      if (!movieName) {
+        alert('Please enter a movie name.');
+        return;
+      }
+      try {
+        const response = await fetch(`${apiBaseUrl}/watchlist/delete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: movieName })
+        });
+        const data = await response.json();
+        document.getElementById('output').style.display = 'block';
+        document.getElementById('output').innerHTML = `
+          <h4>Watchlist Update:</h4>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+      } catch (err) {
+        document.getElementById('output').innerHTML = `<p>Error: ${err.message}</p>`;
+      }
+    }
+
+    // Function to view the watchlist
+    async function viewWatchlist() {
+      try {
+        const response = await fetch(`${apiBaseUrl}/watchlist`);
+        const data = await response.json();
+
+        const movieResults = document.getElementById('movieResults');
+        movieResults.innerHTML = '';
+
+        if (data.results.length > 0) {
+            console.log(data.results)
+            data.results.forEach(movie => displayMovie(movie));
+        } else {
+          movieResults.innerHTML = '<p>Your watchlist is empty.</p>';
+        }
+      } catch (err) {
+        document.getElementById('movieResults').innerHTML = `<p>Error: ${err.message}</p>`;
+      }
+    }
+  </script>
+</body>
+</html>
