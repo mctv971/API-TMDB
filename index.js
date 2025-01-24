@@ -101,7 +101,9 @@ fastify.get('/watchlist', async (request, reply) => {
 const start = async () => {
   try {
     const port = process.env.PORT || 3000; // Utilise le port défini par Render, ou 3000 en local
-    await fastify.listen({ port });
+    const host = process.env.HOST || 'localhost'; // Utilise l'hôte défini par Render, ou localhost en local
+
+    await fastify.listen({ port, host });
     console.log(`Serveur démarré sur http://localhost:${port}`);
   } catch (err) {
     fastify.log.error(err);
