@@ -74,7 +74,7 @@ fastify.post('/watchlist/delete', async (request, reply) => {
   }
 
   try {
-    await getSearchvMovieData(name);
+    await deleteWatchList(name);
     return { message: 'Film supprimé à la watch list.' };
   } catch (error) {
     fastify.log.error(error);
