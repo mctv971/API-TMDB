@@ -104,7 +104,7 @@ const start = async () => {
     const host = process.env.HOST || '0.0.0.0'; // Utilise l'hôte défini par Render, ou localhost en local
 
     await fastify.listen({ port, host });
-    console.log(`Serveur démarré sur http://localhost:${port}`);
+    console.log(`Serveur démarré sur http://${host}:${port}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
